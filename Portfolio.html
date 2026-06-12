@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mudassir Ali Anwar — Game Developer & 3D Artist</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #080C12;
+    /* Translucent variables for glassmorphism */
+    --bg2:      rgba(13, 21, 32, 0.35);
+    --bg3:      rgba(17, 27, 42, 0.45);
+    --panel:    rgba(20, 30, 46, 0.55);
+    --border:   rgba(30, 45, 66, 0.8);
+    --accent:   #00D4FF;
+    --accent2:  #7B5CF5;
+    --accent3:  #FF4B6E;
+    --text:     #E8EFF8;
+    --muted:    #6B7FA3;
+    --dim:      #3A4B65;
+    --mono:     'Space Mono', monospace;
+    --sans:     'Space Grotesk', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.6; overflow-x: hidden; }
+
+  /* ── 3D BACKGROUND CANVAS ── */
+  #bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* ── SCANLINE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.012) 2px, rgba(0,212,255,0.012) 4px);
+    pointer-events: none;
+  }
+
+  /* ── GLASSMORPHISM SHARED CLASS ── */
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 64px;
+    background: rgba(8,12,18,0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .nav-links { display: flex; gap: 32px; }
+  .nav-links a {
+    font-size: 13px; color: var(--muted); text-decoration: none;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative; min-height: 100vh;
+    display: flex; align-items: center;
+    padding: 120px 80px 80px;
+    overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 760px; }
+
+  .hero-eyebrow {
+    font-family: var(--mono); font-size: 12px; color: var(--accent);
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: ''; display: block; width: 32px; height: 1px; background: var(--accent);
+  }
+
+  .hero h1 {
+    font-size: clamp(42px, 7vw, 80px); font-weight: 700; line-height: 1.05;
+    letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  .hero h1 .name-first { color: var(--text); }
+  .hero h1 .name-last {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--accent);
+  }
+
+  .hero-title {
+    font-size: clamp(16px, 2.5vw, 22px); color: var(--muted);
+    margin-bottom: 32px; font-weight: 400;
+  }
+  .hero-title span { color: var(--accent2); font-weight: 500; }
+
+  .hero-desc {
+    font-size: 16px; color: var(--muted); max-width: 520px;
+    line-height: 1.75; margin-bottom: 48px;
+  }
+
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 48px; }
+  .tag {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    padding: 6px 14px; border: 1px solid var(--border);
+    color: var(--muted); background: var(--panel);
+    text-transform: uppercase;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .tag.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.15); }
+
+  .cta-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 14px 28px; text-decoration: none;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    cursor: pointer; border: none;
+  }
+  .btn-primary {
+    background: var(--accent); color: #080C12;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    font-weight: 700;
+  }
+  .btn-primary:hover { background: #fff; }
+  .btn-outline {
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--accent);
+    backdrop-filter: blur(4px);
+  }
+  .btn-outline:hover { background: rgba(0,212,255,0.15); }
+
+  /* ── STAT BAR ── */
+  .statbar {
+    background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 28px 80px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .stat { text-align: center; padding: 0 20px; }
+  .stat + .stat { border-left: 1px solid var(--border); }
+  .stat-num {
+    font-family: var(--mono); font-size: 32px; font-weight: 700;
+    color: var(--accent); line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* ── SECTIONS ── */
+  section { padding: 100px 80px; position: relative; }
+  section:nth-child(even) { background: var(--bg2); }
+
+  .section-eyebrow {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: clamp(28px, 4vw, 42px); font-weight: 700;
+    letter-spacing: -0.02em; margin-bottom: 48px;
+    color: var(--text);
+  }
+  .section-title em { color: var(--accent); font-style: normal; }
+
+  /* ── PROJECTS ── */
+  .projects-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+
+  .project-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 36px;
+    transition: border-color 0.2s, transform 0.2s, background 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .project-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .project-card:hover { border-color: var(--accent); transform: translateY(-2px); background: rgba(20, 30, 46, 0.7); }
+  .project-card:hover::before { opacity: 1; }
+
+  .project-card.featured {
+    grid-column: 1 / -1;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;
+  }
+
+  .project-num {
+    font-family: var(--mono); font-size: 11px; color: var(--dim);
+    margin-bottom: 16px; letter-spacing: 0.1em;
+  }
+  .project-title {
+    font-size: 22px; font-weight: 700; color: var(--text);
+    margin-bottom: 8px; letter-spacing: -0.01em;
+  }
+  .project-sub {
+    font-size: 13px; color: var(--accent2); font-family: var(--mono);
+    margin-bottom: 20px; letter-spacing: 0.05em;
+  }
+  .project-desc { font-size: 14px; color: var(--muted); line-height: 1.8; margin-bottom: 24px; }
+
+  .project-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ptag {
+    font-family: var(--mono); font-size: 10px; padding: 4px 10px;
+    border: 1px solid var(--dim); color: var(--dim);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .ptag.eng { border-color: rgba(0,212,255,0.4); color: rgba(0,212,255,0.9); }
+  .ptag.art { border-color: rgba(123,92,245,0.4); color: rgba(123,92,245,0.9); }
+  .ptag.code { border-color: rgba(255,75,110,0.4); color: rgba(255,75,110,0.9); }
+
+  .project-visual {
+    background: var(--bg3); border: 1px solid var(--border);
+    aspect-ratio: 16/10; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .project-visual-label {
+    font-family: var(--mono); font-size: 11px; color: var(--dim);
+    text-align: center; padding: 20px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  /* ── SKILLS ── */
+  .skills-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+  .skill-card {
+    background: var(--panel); border: 1px solid var(--border); padding: 28px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .skill-card:hover { border-color: var(--accent2); background: rgba(20, 30, 46, 0.7); }
+
+  .skill-icon {
+    width: 40px; height: 40px; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2);
+  }
+  .skill-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .skill-detail { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+  .skill-bar-wrap { margin-top: 12px; }
+  .skill-bar-label { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-bottom: 4px; letter-spacing: 0.1em; display: flex; justify-content: space-between; }
+  .skill-bar-track { height: 3px; background: rgba(255,255,255,0.05); }
+  .skill-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+  /* ── ABOUT ── */
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+  .about-text p { font-size: 15px; color: var(--muted); line-height: 1.9; margin-bottom: 20px; }
+  .about-text p strong { color: var(--text); }
+
+  .influence-list { display: flex; flex-direction: column; gap: 16px; margin-top: 32px; }
+  .influence-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 16px; background: var(--panel); border: 1px solid var(--border);
+  }
+  .inf-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .inf-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .inf-desc { font-size: 12px; color: var(--muted); }
+
+  .spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .spec-item {
+    padding: 14px 16px; background: var(--bg3); border: 1px solid var(--border);
+  }
+  .spec-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .spec-val { font-size: 13px; color: var(--text); font-weight: 500; }
+
+  /* ── CONTACT ── */
+  .contact-inner {
+    max-width: 680px; margin: 0 auto; text-align: center;
+  }
+  .contact-inner .section-title { margin-bottom: 16px; }
+  .contact-sub { font-size: 16px; color: var(--muted); margin-bottom: 48px; line-height: 1.8; }
+  .contact-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 48px; text-align: left; }
+  .contact-card {
+    padding: 20px; background: var(--panel); border: 1px solid var(--border);
+  }
+  .cc-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .cc-val { font-size: 13px; color: var(--accent); font-weight: 500; word-break: break-all; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: transparent; border-top: 1px solid var(--border);
+    padding: 32px 80px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-left { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.1em; }
+  .footer-right { font-size: 12px; color: var(--dim); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .hero-content > * { animation: fadeUp 0.6s ease both; }
+  .hero-content > *:nth-child(1) { animation-delay: 0.1s; }
+  .hero-content > *:nth-child(2) { animation-delay: 0.2s; }
+  .hero-content > *:nth-child(3) { animation-delay: 0.3s; }
+  .hero-content > *:nth-child(4) { animation-delay: 0.4s; }
+  .hero-content > *:nth-child(5) { animation-delay: 0.5s; }
+  .hero-content > *:nth-child(6) { animation-delay: 0.6s; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; }
+    .nav-links { gap: 16px; }
+    .hero { padding: 100px 24px 60px; }
+    .statbar { padding: 24px; grid-template-columns: repeat(2, 1fr); }
+    section { padding: 60px 24px; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .project-card.featured { grid-column: 1; grid-template-columns: 1fr; }
+    .skills-grid { grid-template-columns: 1fr 1fr; }
+    .about-grid { grid-template-columns: 1fr; }
+    .contact-cards { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 8px; padding: 24px; text-align: center; }
+  }
+  @media (max-width: 540px) {
+    .skills-grid { grid-template-columns: 1fr; }
+    .statbar { grid-template-columns: 1fr 1fr; }
+    .stat + .stat { border-left: none; }
+    .stat:nth-child(3) { border-top: 1px solid var(--border); }
+    .stat:nth-child(4) { border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo">MAA // Portfolio</div>
+  <div class="nav-links">
+    <a href="#projects">Projects</a>
+    <a href="#skills">Skills</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<section class="hero" id="home">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Game Developer &amp; 3D Environment Artist</div>
+    <h1>
+      <span class="name-first">Mudassir Ali</span><br>
+      <span class="name-last">Anwar</span>
+    </h1>
+    <p class="hero-title">Unreal Engine 5 · Blender · C++ · <span>Air University Islamabad</span></p>
+    <p class="hero-desc">
+      4th-semester BScGD student building environments, systems, and assets.
+      I work at the intersection of technical and artistic — from Blueprint gameplay logic
+      to hard-surface modeling — driven by games like RE4 Remake and Cyberpunk 2077.
+    </p>
+    <div class="hero-tags">
+      <span class="tag active">UE5 Blueprints</span>
+      <span class="tag active">Environment Design</span>
+      <span class="tag active">Blender Hard-Surface</span>
+      <span class="tag">C++</span>
+      <span class="tag">Open World</span>
+      <span class="tag">Level Design</span>
+    </div>
+    <div class="cta-row">
+      <a href="#contact" class="btn btn-primary">Hire Me — Summer 2026</a>
+      <a href="https://www.linkedin.com/in/mudassir-ali-anwar/" target="_blank" class="btn btn-outline glass">LinkedIn Profile</a>
+    </div>
+  </div>
+</section>
+
+<div class="statbar glass">
+  <div class="stat">
+    <div class="stat-num">4</div>
+    <div class="stat-label">Semesters Completed</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">UE5</div>
+    <div class="stat-label">Primary Engine</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">RTX</div>
+    <div class="stat-label">3060 12GB Workstation</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">ISB</div>
+    <div class="stat-label">Based in Islamabad, PK</div>
+  </div>
+</div>
+
+<section id="projects" class="glass">
+  <div class="section-eyebrow">Portfolio</div>
+  <div class="section-title">Selected <em>Projects</em></div>
+
+  <div class="projects-grid">
+
+    <div class="project-card featured glass">
+      <div>
+        <div class="project-num">01 / Active Development</div>
+        <div class="project-title">Murree Open-World Environment</div>
+        <div class="project-sub">Unreal Engine 5 · Personal Project · 2025–Present</div>
+        <p class="project-desc">
+          A large-scale open-world map based on the real Murree region in northern Pakistan.
+          Built from scratch in UE5, the project covers terrain generation using UE5's landscape tools,
+          PBR material instances sourced from Poly Haven, environmental storytelling through prop placement,
+          and technical trigger systems. This is my most ambitious environment work to date — pushing
+          real-world photoreference into engine with high material fidelity.
+        </p>
+        <div class="project-tags">
+          <span class="ptag eng">UE5 Landscape</span>
+          <span class="ptag eng">PBR Materials</span>
+          <span class="ptag art">Environment Art</span>
+          <span class="ptag art">Poly Haven</span>
+          <span class="ptag code">Trigger Systems</span>
+          <span class="ptag art">Open World</span>
+        </div>
+      </div>
+      <div class="project-visual">
+        <div class="project-visual-label" style="position:relative;z-index:1;">
+          Murree terrain — UE5<br><span style="color:rgba(100,180,100,0.5);font-size:10px;">Open world in active development</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card glass">
+      <div class="project-num">02 / Academic Project</div>
+      <div class="project-title">UE5 Interactive Maze Game</div>
+      <div class="project-sub">Unreal Engine 5 · Game Design Principles · 2025</div>
+      <p class="project-desc">
+        A complete, playable maze game built entirely in Unreal Engine 5 for the Game Design
+        Principles course. I handled the full pipeline: environment layout, lighting, and all
+        gameplay logic implemented in Blueprints — including timer triggers, interactive pickups,
+        and strict win/loss conditions.
+      </p>
+      <div class="project-tags" style="margin-top: 16px;">
+        <span class="ptag eng">UE5 Blueprints</span>
+        <span class="ptag art">Level Design</span>
+        <span class="ptag code">Timer Logic</span>
+        <span class="ptag code">Win/Loss System</span>
+      </div>
+    </div>
+
+    <div class="project-card glass">
+      <div class="project-num">03 / Personal Work</div>
+      <div class="project-title">Hard-Surface Asset Portfolio</div>
+      <div class="project-sub">Blender · 3D Modeling & Rendering · 2024–2025</div>
+      <p class="project-desc">
+        A collection of high-fidelity hard-surface models made in Blender, focused on technical
+        precision and game-ready output. Includes a fully detailed PS2 Slim console with accurate
+        proportions and a multi-material setup, plus a sci-fi cargo crate with PBR texturing and
+        optimized topology for engine import.
+      </p>
+      <div class="project-tags" style="margin-top: 16px;">
+        <span class="ptag art">Blender</span>
+        <span class="ptag art">Hard-Surface</span>
+        <span class="ptag art">PBR Texturing</span>
+        <span class="ptag art">UV Mapping</span>
+        <span class="ptag eng">Game-Ready Export</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section id="skills">
+  <div class="section-eyebrow">Capabilities</div>
+  <div class="section-title">Technical <em>Skills</em></div>
+
+  <div class="skills-grid">
+    <div class="skill-card glass">
+      <div class="skill-icon">🎮</div>
+      <div class="skill-name">Unreal Engine 5</div>
+      <div class="skill-detail">Blueprint visual scripting, environment design, level blocking, gameplay systems, terrain tools, Sequencer, post-process. Versions 5.6.1 and 5.7.1.</div>
+      <div class="skill-bar-wrap">
+        <div class="skill-bar-label"><span>PROFICIENCY</span><span>Primary Tool</span></div>
+        <div class="skill-bar-track"><div class="skill-bar-fill" style="width:80%"></div></div>
+      </div>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-icon">🔷</div>
+      <div class="skill-name">Blender</div>
+      <div class="skill-detail">Hard-surface modeling, UV unwrapping, PBR material setup, rendering, game-ready asset pipeline. Strong focus on technical precision and clean topology.</div>
+      <div class="skill-bar-wrap">
+        <div class="skill-bar-label"><span>PROFICIENCY</span><span>Strong</span></div>
+        <div class="skill-bar-track"><div class="skill-bar-fill" style="width:75%"></div></div>
+      </div>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-icon">⚙️</div>
+      <div class="skill-name">C++</div>
+      <div class="skill-detail">Solid academic foundation through Data Structures & Algorithms and core programming coursework at Air University. Applied to game logic contexts.</div>
+      <div class="skill-bar-wrap">
+        <div class="skill-bar-label"><span>PROFICIENCY</span><span>Academic + Applied</span></div>
+        <div class="skill-bar-track"><div class="skill-bar-fill" style="width:65%"></div></div>
+      </div>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-icon">🐍</div>
+      <div class="skill-name">Python</div>
+      <div class="skill-detail">Used for game logic, AI system implementation (Flask web game), and scripting tasks. Comfortable with server-side Python for interactive applications.</div>
+      <div class="skill-bar-wrap">
+        <div class="skill-bar-label"><span>PROFICIENCY</span><span>Practical</span></div>
+        <div class="skill-bar-track"><div class="skill-bar-fill" style="width:68%"></div></div>
+      </div>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-icon">🌍</div>
+      <div class="skill-name">Environment Art</div>
+      <div class="skill-detail">Open-world terrain generation, material instance workflows, Poly Haven texture pipeline, environmental storytelling, prop placement and lighting.</div>
+      <div class="skill-bar-wrap">
+        <div class="skill-bar-label"><span>PROFICIENCY</span><span>Strong Focus</span></div>
+        <div class="skill-bar-track"><div class="skill-bar-fill" style="width:78%"></div></div>
+      </div>
+    </div>
+    <div class="skill-card glass">
+      <div class="skill-icon">🖥️</div>
+      <div class="skill-name">Hardware Setup</div>
+      <div class="skill-detail">Custom workstation: NVIDIA GeForce RTX 3060 12GB, dual landscape monitors. Optimized for heavy rendering, real-time preview, and remote collaboration.</div>
+      <div class="skill-bar-wrap">
+        <div class="skill-bar-label"><span>READINESS</span><span>Production-Ready</span></div>
+        <div class="skill-bar-track"><div class="skill-bar-fill" style="width:100%; background: linear-gradient(90deg, var(--accent), #00ff88);"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about" class="glass">
+  <div class="section-eyebrow">Background</div>
+  <div class="section-title">About <em>Me</em></div>
+
+  <div class="about-grid">
+    <div class="about-text">
+      <p>
+        I am a 4th-semester <strong>BScGD student at Air University, Islamabad</strong>, studying Computer Games Development. My work sits at the edge between technical and artistic — I am equally comfortable writing Blueprint logic for a gameplay system and spending hours getting the bevel radius right on a hard-surface model.
+      </p>
+      <p>
+        My current focus is <strong>environment art and level design in UE5</strong>. The Murree open-world project is where I push myself hardest — translating real geography into engine, managing material fidelity, and learning what makes a space feel lived-in. I'm also deeply invested in Blender as a modeling tool, approaching every asset like a technical problem with an aesthetic solution.
+      </p>
+      <p>
+        I am actively seeking a <strong>summer 2026 internship</strong> in the Islamabad/Rawalpindi game development scene. I want to contribute to real projects, learn from professionals, and bring the same work ethic I apply to my personal projects into a studio environment. Paid or unpaid — I am here for the experience.
+      </p>
+
+      <div class="influence-list">
+        <div class="influence-item glass">
+          <div class="inf-icon">🎮</div>
+          <div>
+            <div class="inf-title">Resident Evil 4 Remake</div>
+            <div class="inf-desc">Study of environmental storytelling, tension through space, and how prop placement communicates narrative without dialogue.</div>
+          </div>
+        </div>
+        <div class="influence-item glass">
+          <div class="inf-icon">🌆</div>
+          <div>
+            <div class="inf-title">Cyberpunk 2077</div>
+            <div class="inf-desc">Open-world density, cinematic lighting, material fidelity at scale. The benchmark for what UE5 environments can aspire to.</div>
+          </div>
+        </div>
+        <div class="influence-item glass">
+          <div class="inf-icon">🥊</div>
+          <div>
+            <div class="inf-title">Tekken 8</div>
+            <div class="inf-desc">Character aesthetics, VFX layering, and the design language of a stage environment. Influences my thinking on asset readability.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="margin-bottom:32px;">
+        <div class="section-eyebrow" style="margin-bottom:16px;">Workstation</div>
+        <div class="spec-grid">
+          <div class="spec-item glass"><div class="spec-label">GPU</div><div class="spec-val">RTX 3060 12GB</div></div>
+          <div class="spec-item glass"><div class="spec-label">Display</div><div class="spec-val">Dual Landscape</div></div>
+          <div class="spec-item glass"><div class="spec-label">Engines</div><div class="spec-val">UE5.6 / UE5.7</div></div>
+          <div class="spec-item glass"><div class="spec-label">Software</div><div class="spec-val">Blender, UE5</div></div>
+          <div class="spec-item glass"><div class="spec-label">Remote</div><div class="spec-val">Fully Equipped</div></div>
+          <div class="spec-item glass"><div class="spec-label">Location</div><div class="spec-val">Islamabad, PK</div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-eyebrow" style="margin-bottom:16px;">Education</div>
+        <div class="glass" style="background:var(--panel);border:1px solid var(--border);padding:24px;">
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">B.Sc. Computer Games Development</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:12px;">Air University · E-9 Campus · Islamabad</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.8;">
+            4th Semester Completed · Roll No: 241996<br><br>
+            Coursework: Data Structures &amp; Algorithms, Digital Logic Design, Multivariable Calculus, Computer Networks, Game Design Principles, Intro to AI, Web Applications &amp; Services
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="contact-inner">
+    <div class="section-eyebrow">Get In Touch</div>
+    <div class="section-title">Open for <em>Internship</em></div>
+    <p class="contact-sub">
+      Looking for a summer 2026 game development internship in Islamabad or Rawalpindi — or remote.
+      Bring me in as a junior game developer, 3D artist, environment artist, or QA tester.
+      I am motivated, available immediately, and equipped to contribute from day one.
+    </p>
+
+    <div class="contact-cards">
+      <div class="contact-card glass">
+        <div class="cc-label">LinkedIn</div>
+        <div class="cc-val">mudassir-ali-anwar</div>
+      </div>
+      <div class="contact-card glass">
+        <div class="cc-label">University</div>
+        <div class="cc-val">Air University, Islamabad</div>
+      </div>
+      <div class="contact-card glass">
+        <div class="cc-label">Available</div>
+        <div class="cc-val">Immediately · Summer 2026</div>
+      </div>
+    </div>
+
+    <div class="cta-row" style="justify-content:center;">
+      <a href="https://www.linkedin.com/in/mudassir-ali-anwar/" target="_blank" class="btn btn-primary">Message on LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">MUDASSIR ALI ANWAR // BSCGD // AIR UNIVERSITY ISLAMABAD</div>
+  <div class="footer-right">UE5 · Blender · C++ · Python</div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+  // 1. Scene Setup
+  const canvas = document.querySelector('#bg-canvas');
+  const scene = new THREE.Scene();
+  
+  // 2. Camera Setup (Keeping it centered)
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, 22);
+
+  // 3. Renderer Setup (Enable high-quality color mapping for GLTF textures)
+  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+  // 4. Load Custom 3D Model (.glb)
+  const modelGroup = new THREE.Group();
+  scene.add(modelGroup);
+
+  const loader = new THREE.GLTFLoader();
+  let loadedModel;
+
+  // Ensure 'xbox_elite_controller.glb' is in the exact same folder as this HTML file
+  loader.load(
+    'xbox_elite_controller.glb', 
+    function (gltf) {
+      loadedModel = gltf.scene;
+
+      // 1. Measure the model's actual size
+      const box = new THREE.Box3().setFromObject(loadedModel);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+
+      // 2. Automatically calculate the perfect scale to fit the screen
+      const maxDimension = Math.max(size.x, size.y, size.z);
+      const targetSize = 15; // The ideal size for the camera view
+      const autoScale = targetSize / maxDimension;
+      
+      // 3. Apply the calculated scale
+      loadedModel.scale.set(autoScale, autoScale, autoScale); 
+      
+      // 4. Center the newly scaled model perfectly
+      loadedModel.position.x = -center.x * autoScale;
+      loadedModel.position.y = -center.y * autoScale;
+      loadedModel.position.z = -center.z * autoScale;
+
+      modelGroup.add(loadedModel);
+    },
+    function (xhr) {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    },
+    function (error) {
+      console.error('An error happened loading the 3D model:', error);
+    }
+  );
+
+  // Set initial dramatic isometric angle
+  modelGroup.rotation.set(0.4, -0.5, 0.1);
+
+  // 5. Lighting Setup (Crucial for high-poly look and showing textures)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+  scene.add(ambientLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+  dirLight.position.set(5, 10, 15);
+  scene.add(dirLight);
+
+  // Dynamic colored rim lights to match your portfolio colors
+  const cyanLight = new THREE.PointLight(0x00D4FF, 5, 50);
+  cyanLight.position.set(-10, 5, 5);
+  scene.add(cyanLight);
+
+  const purpleLight = new THREE.PointLight(0x7B5CF5, 5, 50);
+  purpleLight.position.set(10, -5, 5);
+  scene.add(purpleLight);
+
+  // 6. Scroll Variables
+  let currentScroll = 0;
+  window.addEventListener('scroll', () => {
+    currentScroll = window.scrollY;
+  });
+
+  // 7. Animation Loop
+  // Save initial rotations for parallax calculation
+  const initRotX = 0.4;
+  const initRotY = -0.5;
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const time = Date.now() * 0.001;
+
+    // Smooth idle hovering
+    modelGroup.position.y = Math.sin(time * 1.5) * 0.4;
+
+    // Slow, continuous rotation to show off your model
+    if (loadedModel) {
+      loadedModel.rotation.y += 0.002;
+    }
+
+    // SCROLL REACTION: The model stays centered, but tilts/rotates to follow your scroll
+    const targetRotX = initRotX + (currentScroll * 0.0005);
+    const targetRotY = initRotY + (currentScroll * 0.0002);
+    
+    modelGroup.rotation.x += (targetRotX - modelGroup.rotation.x) * 0.05;
+    modelGroup.rotation.y += (targetRotY - modelGroup.rotation.y) * 0.05;
+
+    renderer.render(scene, camera);
+  }
+  
+  animate();
+
+  // 8. Handle Window Resizing
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+
+<script>
+  // Subtle scroll-reveal for HTML content
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.project-card, .skill-card, .influence-item, .spec-item').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
