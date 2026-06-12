@@ -646,6 +646,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+
 <script>
   // 1. Scene Setup
   const canvas = document.querySelector('#bg-canvas');
@@ -666,7 +668,14 @@
   const modelGroup = new THREE.Group();
   scene.add(modelGroup);
 
+  // --- NEW DRACO DECODER SETUP ---
+  const dracoLoader = new THREE.DRACOLoader();
+  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.4.1/');
+
   const loader = new THREE.GLTFLoader();
+  loader.setDRACOLoader(dracoLoader); // Attach the decoder to the GLTF Loader
+  // -------------------------------
+
   let loadedModel;
 
   // Ensure 'xbox_elite_controller.glb' is in the exact same folder as this HTML file
